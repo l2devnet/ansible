@@ -1,0 +1,8 @@
+---
+- name: Install License
+  hosts: all
+  become: true
+  tasks:
+    - name: install License
+      nclu:
+      command: "/usr/cumulus/bin/cl-license -i /etc/cumulus/license.txt"

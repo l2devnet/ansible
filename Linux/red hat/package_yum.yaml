@@ -1,0 +1,13 @@
+---
+- name: Install package on centos
+  hosts: web server
+  become: true
+  tasks:
+   - name: Install Apache
+     ansible.builtin.yum:
+      name: httpd
+      state: installed
+   - name: Remove Apache
+     ansible.builtin.yum:
+      name: httpd
+      state: removed

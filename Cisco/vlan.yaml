@@ -1,0 +1,10 @@
+---
+- name: Cisco vlan playbook
+  hosts: cisco
+  connection: network_cli
+  tasks:
+   - name: Run cli_command on Cisco IOS
+     cisco.ios.ios_vlans:
+      config:
+       - name: vlan 10
+         vlan_id: 10

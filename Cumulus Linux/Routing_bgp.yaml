@@ -1,0 +1,14 @@
+---
+- name: Configure BGP
+  hosts: spine1
+  become: true
+  tasks:
+    - name: Configure BGP
+      nclu:
+       command: net add bgp autonomous-system 65001
+    - name: Configure bgp peer to leaf
+      nclu:
+       command: net add bgp neighboar swp1 remote-as external
+    - name: Save and Commit
+      nclu:
+       command: net commit

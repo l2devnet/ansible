@@ -1,0 +1,19 @@
+---
+- name: Get ip Address
+  hosts: lab
+  gather_facts: false
+  tasks:
+   - name: Get ip Address
+     ansible.builtin.setup:
+      filter:
+       - '!all'
+       - all_ipv4_addresses
+     register: iplasut
+   - name: Start Debuging
+     ansible.builtin.debug:
+      msg: "{{ iplasut }}"
+   - name: Save to file
+     ansible.builtin.copy:
+      content: "{{ iplasut }}"
+      dest: "/home/andre/GitHub/lasut.txt"
+      mode: '0644'

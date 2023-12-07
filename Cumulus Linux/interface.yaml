@@ -1,0 +1,8 @@
+---
+- name: Configure interface cumulus linux template Playbook
+  hosts: spine1
+  become: true
+  tasks:
+    - name: Configure interface SWP1 ip address
+      nclu:
+      command: net add interface swp1 ip address 1.1.1.1 /24

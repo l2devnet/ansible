@@ -1,0 +1,8 @@
+---
+- name: Configure Cisco Banner
+  hosts: cisco
+  connection: network_cli
+  tasks:
+   - name: Configure banner
+     cisco.ios.ios_banner:
+     banner: login 

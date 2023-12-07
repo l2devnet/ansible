@@ -1,0 +1,28 @@
+---
+- name: Playbook for ICX banner
+  hosts: ruckus
+  tasks:
+    - name: Create new user without password
+      community.network.icx_user:
+        name: user
+        nopassword: true
+
+#    - name: Create a new user with password
+#      community.network.icx_user:
+#        name: user
+#        configured_password: 'password'
+
+#    - name: Update password of user
+#      community.network.icx_user:
+#        name: user
+#        configured_password: 'password'
+#        update_password: 'password_update'
+
+#    - name: Remove user
+#      community.network.icx_user:
+#        name: user
+#        state: absent
+
+#    - name: Set user privilage level to 5
+#        name: user
+#        privilege: 5

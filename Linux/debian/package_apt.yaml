@@ -1,0 +1,10 @@
+---
+- name: Install Package with apt builtin apt
+  hosts: lab
+  tasks:
+    - name: Update apt repository and install apps
+      become: true
+      become_method: ansible.builtin.sudo
+      ansible.builtin.apt:
+        name: net-tools
+        update_cache: true

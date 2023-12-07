@@ -1,0 +1,7 @@
+---
+- name: Docker remove container
+  hosts: all
+  tasks:
+   - name: Remove docker container
+     community.docker.docker_container:
+      name: nginx

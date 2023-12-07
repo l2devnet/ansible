@@ -1,0 +1,13 @@
+---
+- name: Playbook for configuring interface on ICX
+  hosts: devruckus
+  tasks:
+   - name: Enable ethernet port and set name
+     community.network.icx_interface:
+      name: ethernet 1/1/2
+      description: use ansible
+      enabled: true
+  #  - name: Disable ethernet port
+    #  community.network.icx_interface:
+      # name: ethernet 1/1/2
+      # enabled: false

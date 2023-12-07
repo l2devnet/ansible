@@ -1,0 +1,14 @@
+---
+- name: Configure interface cisco router
+  hosts: cisco
+  connection: network_cli
+  tasks:
+   - name: Configure interface description GigabitEthernet1/0/10
+     cisco.ios.ios_interfaces:
+      config:
+       - name: GigabitEthernet1/0/10
+         description: lasut
+         enabled: true
+         speed: 1000
+         duplex: full
+   - name:

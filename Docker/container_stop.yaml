@@ -1,0 +1,11 @@
+---
+- name: Playbook for docker container
+  hosts: lab
+  tasks:
+   - name: Stop Nginx container
+     community.docker.docker_container:
+      name: myapp # container name
+      image: nginx # our images
+      state: stopped
+      ports:
+       - "8080:80" # localport

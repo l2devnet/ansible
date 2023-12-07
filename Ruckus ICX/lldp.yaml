@@ -1,0 +1,20 @@
+---
+- name: Playbook for LLDP
+  hosts: ruckus
+  tasks:
+   - name: Disable LLDP
+     community.network.icx_lldp:
+      state: absent
+   - name: Enable LLDP
+     community.network.icx_lldp:
+      state: present
+   - name: Disable LLDP on port ethernet 1/1/19
+     community.network.icx_lldp:
+      interfaces:
+       - name: ethernet 1/1/19
+         state: absent
+      state: present
+   - name: Enable LLDP on port ethernet 1/1/19
+     community.network.icx_lldp:
+      interfaces:
+       - name: ethernet 1/1/19

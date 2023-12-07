@@ -1,0 +1,16 @@
+---
+- name: Configure Vlan Cumulus Linux
+  hosts: cumulus
+  become: true
+  tasks:
+    - name: Add vlan 100 to Switch and untagged swp2
+      nclu:
+      commands: |
+        - net add vlan 100 
+        - net add interface swp2 bridge access 100
+    - name: add ip address to vlan 100 service
+      nclu:
+      commands: net add vlan 100 ip address 10.10.10.1/24
+    - name: Save and Commit
+      nclu:
+      command: net commit

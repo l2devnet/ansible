@@ -1,0 +1,13 @@
+---
+- name: Playbook for ICX banner
+  hosts: devruckus
+  tasks:
+    - name: Configure ICX motd banner
+      community.network.icx_banner:
+        banner: motd
+        text: This is motd banner
+        state: present
+    - name: Remove motd banner
+      community.network.icx_banner:
+        banner: motd
+        state: absent

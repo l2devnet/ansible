@@ -1,0 +1,9 @@
+---
+- name: Playbook for download image docker
+  hosts: lab
+  tasks:
+    - name: Pull image
+      community.docker.docker_image:
+        name: busybox
+        source: pull
+        state: present

@@ -1,0 +1,8 @@
+---
+- name: Stoping Service
+  hosts: lab
+  tasks:
+    - name: Stoping apache Service
+      ansible.builtin.service:
+        name: apache
+        state: stopped

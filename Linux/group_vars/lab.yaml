@@ -1,0 +1,4 @@
+---
+ansible_user: docker
+ansible_password: docker!
+ansible_sudo_pass: docker!

@@ -1,0 +1,13 @@
+---
+- name: Managing service
+  hosts: all
+  become: true
+  tasks:
+    - name: restart switchd
+      service: |
+       - name: switchd
+       - state: restarted
+    - name: reload networking
+      service: |
+       - name: networking
+       - state: reloaded

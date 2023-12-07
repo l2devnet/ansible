@@ -1,0 +1,24 @@
+---
+- name: Playbook for Creating Vlan on ICX
+  hosts: ruckus
+  tasks:
+   - name: Add ethernet 1/1/17 untagged to vlan 900
+     community.network.icx_vlan:
+      name: test-vlan
+      vlan_id: 900
+      interfaces:
+       name: ethernet 1/1/17
+   - name: Make VLAN 901
+     community.network.icx_vlan:
+      name: test-vlan
+      vlan_id: 901
+      interfaces:
+       name: ethernet 1/1/18
+      tagged:
+       name: ethernet 1/1/19
+   - name: Make VLAN 902 and untagged ethernet 1/1/19
+     community.network.icx_vlan:
+      name: test-vlan
+      vlan_id: 902
+      interfaces:
+       name: ethernet 1/1/19
