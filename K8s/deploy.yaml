@@ -1,0 +1,191 @@
+---
+- name: Install K8s Package
+  hosts: all
+  tasks:
+  - name: Term
+    ansible.builtin.fail:
+     msg: "OS should be Ubuntu 22.04, not {{ ansible_distribution }} {{ ansible_distribution_version }}"
+    when: ansible_distribution != 'Ubuntu' or ansible_distribution_version != '22.04'
+  - name: Update Repository
+    become: true
+    ansible.builtin.apt:
+     update_cache: yes
+#----------------Disable Swaap Partition------------------------------------------#
+  - name: Disable swaap
+    become: true
+    ansible.builtin.shell: swapoff -a
+  - name: disable SWAP in fstab (Kubeadm requirement)
+    become: true
+    ansible.builtin.replace:
+     path: /etc/fstab
+     regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+     replace: '# \1'
+#------------------add Docker and Kubernetes repository---------------------------#
+  - name: Create a directory /etc/apt/keyrings if it does not exist
+    become: true
+    ansible.builtin.file:
+     path: /etc/apt/keyrings
+     state: directory
+     mode: '0755'
+  - name: Add Docker apt-key
+    become: true
+    ansible.builtin.get_url:
+     url: https://download.docker.com/linux/ubuntu/gpg
+     dest: /etc/apt/keyrings/docker-apt-keyring.asc
+     mode: '0644'
+     force: true
+  - name: Add Docker's APT repository
+    become: true
+    ansible.builtin.apt_repository:
+     repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker-apt-keyring.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+     state: present
+     update_cache: yes
+  - name: Add Kubernetes apt-key
+    become: true
+    ansible.builtin.get_url:
+     url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+     dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+     mode: '0644'
+     force: true
+  - name: Add Kubernetes' APT repository
+    become: true
+    ansible.builtin.apt_repository:
+     repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+     state: present
+     update_cache: yes
+#-------------------------------Install Package-----------------------------------#
+  - name: install APT Transport HTTPS
+    become: true
+    ansible.builtin.apt:
+     name: apt-transport-https
+     state: present
+  - name: install Containerd
+    become: true
+    ansible.builtin.apt:
+     name: containerd.io
+     state: present
+  - name: install Kubeadm
+    become: true
+    ansible.builtin.apt:
+     name: kubeadm
+     state: present
+  - name: install Kubelet
+    become: true
+    ansible.builtin.apt:
+     name: kubelet
+     state: present
+     update_cache: true
+#------------------Configure Service--------------------------------------------#
+#  - name: Remove containerd config
+#    become: yes
+#    ansible.builtin.file:
+#     path: /etc/containerd/config.toml
+#     state: absent
+  - name: make sure tomb
+    become: yes
+    ansible.builtin.shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+  - name: enable the Containerd service and start it
+    become: yes
+    ansible.builtin.systemd:
+     name: containerd
+     state: restarted
+     enabled: yes
+     daemon-reload: yes
+  - name: enable the Kubelet service, and enable it persistently
+    become: yes
+    ansible.builtin.service:
+     name: kubelet
+     enabled: yes
+
+#---------------------Module--------------------------#
+  - name: create an empty file for the Containerd module
+    become: true
+    ansible.builtin.file:
+     path: /etc/modules-load.d/containerd.conf
+     state: touch
+
+  - name: configure modules for Containerd
+    become: true
+    ansible.builtin.blockinfile:
+     path: /etc/modules-load.d/containerd.conf
+     block: |
+            overlay
+            br_netfilter
+  - name: load module br_netfilter
+    become: true
+    modprobe:
+     name: br_netfilter
+     state: present
+  - name: create an empty file for Kubernetes sysctl params
+    become: true
+    ansible.builtin.file:
+     path: /etc/sysctl.d/99-kubernetes-cri.conf
+     state: touch
+  - name: configure sysctl params for Kubernetes
+    become: true
+    ansible.builtin.blockinfile:
+     path: /etc/sysctl.d/99-kubernetes-cri.conf
+     block: |
+            net.bridge.bridge-nf-call-iptables  = 1
+            net.ipv4.ip_forward                 = 1
+            net.bridge.bridge-nf-call-ip6tables = 1
+
+  - name: apply sysctl params without reboot
+    become: true
+    ansible.builtin.command: sysctl --system
+
+
+#--------------------master node----------------------------#
+- hosts: master
+  become: yes
+  tasks:
+    - name: install Kubectl
+      ansible.builtin.apt:
+       name: kubectl
+       state: present
+       force: yes # allow downgrades
+    - name: initialize the cluster (this could take some time)
+      become: yes
+      ansible.builtin.shell: kubeadm init >> cluster_initialized.log
+      args:
+       chdir: /home/psi-admin
+       creates: cluster_initialized.log
+    - name: create .kube directory
+      become: yes
+      become_user: psi-admin
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+    - name: copy admin.conf to user's kube config
+      become: yes
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/psi-admin/.kube/config
+        remote_src: yes
+        owner: psi-admin
+    - name: install Pod network
+      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/calico.yaml >> pod_network_setup.log
+      args:
+        chdir: $HOME
+        creates: pod_network_setup.log
+    - name: get join command
+      ansible.builtin.shell: kubeadm token create --print-join-command
+      register: join_command_raw
+    - name: set join command
+      set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+    - name: Debug
+      debug: msg={{join_command}}
+#------------------------------worker Node Section----------------------------#
+- hosts: worker
+  become: yes
+  tasks:
+    - name: join cluster
+      become: true
+      shell: "{{sudo.join_command}}"
+      args:
+        chdir: $HOME
+        creates: node_joined.log
+    - name: Debug
+      debug: msg={{join_command}}
