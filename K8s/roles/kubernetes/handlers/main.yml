@@ -1,0 +1,6 @@
+---
+# handlers file for kubernetes
+- name: enable the Kubelet service, and enable it persistently
+  ansible.builtin.service:
+   name: kubelet
+   enabled: yes
