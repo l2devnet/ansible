@@ -1,0 +1,34 @@
+---
+- name: Install K8s Package
+  hosts: master
+  tasks:
+   - name: initialize the cluster (this could take some time)
+     become: true
+     ansible.builtin.shell: |
+      kubeadm init >> cluster_initialized.log
+     args:
+      chdir: /home/master
+      creates: cluster_initialized.log
+
+   - name: create .kube directory
+     become: true
+     become_user: master
+     file:
+      path: $HOME/.kube
+      state: directory
+      mode: 0755
+
+   - name: copy admin.conf to user's kube config
+     become: true
+     ansible.builtin.copy:
+      src: /etc/kubernetes/admin.conf
+      dest: /home/master/.kube/config
+      remote_src: true
+      owner: master
+
+   - name: Install Pod network
+     ansible.builtin.shell: |
+      kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.2/manifests/calico.yaml >> pod_network_setup.log
+     args:
+      chdir: $HOME
+      creates: pod_network_setup.log

@@ -1,5 +1,18 @@
 ---
 # tasks file for kubernetes
+
+#-------------------------DISABLE SWAP-------------------------------#
+- name: Disable swaap
+  become: true
+  ansible.builtin.shell: swapoff -a
+- name: disable SWAP in fstab (Kubeadm requirement) 
+  become: true
+  ansible.builtin.replace:
+   path: /etc/fstab
+   regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+   replace: '# \1'
+
+#-------------------------k8s Install-------------------------------#
 - name: Add Kubernetes apt-key
   become: true
   ansible.builtin.get_url:
@@ -13,14 +26,25 @@
    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
    state: present
    update_cache: yes
-- name: install Kubeadm
+- name: install Kubeadm, Kubectl, Kubelet
   become: true
   ansible.builtin.apt:
-   name: kubeadm
-   state: present
-- name: install Kubelet
-  become: true
-  ansible.builtin.apt:
-   name: kubelet
-   state: present
+   package:
+    - kubeadm
+    - kubelet
+    - kubectl
    update_cache: true
+
+- name: Remove containerd config
+  become: true
+  ansible.builtin.file:
+   path: /etc/containerd/config.toml
+   state: absent
+
+- name: enable the Containerd service and start it
+  become: true
+  ansible.builtin.systemd:
+   name: containerd
+   state: restarted
+   enabled: true
+   daemon-reload: true

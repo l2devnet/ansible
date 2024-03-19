@@ -1,0 +1,60 @@
+---
+- name: Install K8s Package
+  hosts: all
+  roles:
+    - docker
+    - kubernetes
+  tasks:
+#  - name: Term
+#    ansible.builtin.fail:
+#     msg: "OS should be Ubuntu 22.04, not {{ ansible_distribution }} {{ ansible_distribution_version }}"
+#    when: ansible_distribution != 'Ubuntu' or ansible_distribution_version != '22.04'
+
+#-----------------UPDATE REPO ---------------------------#
+#  - name: Update Repository
+#    become: true
+#    ansible.builtin.apt:
+#     update_cache: yes
+#------------------Configure Service--------------------------------------------#
+
+#  - name: make sure tomb
+#    become: yes
+#    ansible.builtin.shell: sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+
+#---------------------Module--------------------------#
+  - name: create an empty file for the Containerd module
+    become: true
+    ansible.builtin.file:
+     path: /etc/modules-load.d/containerd.conf
+     state: touch
+
+  - name: configure modules for Containerd
+    become: true
+    ansible.builtin.blockinfile:
+     path: /etc/modules-load.d/containerd.conf
+     block: |
+            overlay
+            br_netfilter
+  - name: load module br_netfilter
+    become: true
+    modprobe:
+     name: br_netfilter
+     state: present
+  - name: create an empty file for Kubernetes sysctl params
+    become: true
+    ansible.builtin.file:
+     path: /etc/sysctl.d/99-kubernetes-cri.conf
+     state: touch
+  - name: configure sysctl params for Kubernetes
+    become: true
+    ansible.builtin.blockinfile:
+     path: /etc/sysctl.d/99-kubernetes-cri.conf
+     block: |
+            net.bridge.bridge-nf-call-iptables  = 1
+            net.ipv4.ip_forward                 = 1
+            net.bridge.bridge-nf-call-ip6tables = 1
+
+  - name: apply sysctl params without reboot
+    become: true
+    ansible.builtin.command: sysctl --system
