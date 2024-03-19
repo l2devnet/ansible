@@ -1,4 +1,0 @@
----
-ansible_user: master
-ansible_password: master!
-ansible_sudo_pass: master!
