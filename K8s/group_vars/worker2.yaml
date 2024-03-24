@@ -1,0 +1,4 @@
+---
+ansible_user: worker2
+ansible_password: worker2!
+ansible_sudo_pass: worker2!

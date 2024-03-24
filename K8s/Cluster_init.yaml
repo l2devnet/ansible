@@ -1,8 +1,8 @@
 ---
-- name: Install K8s Package
+- name: Cluster Init
   hosts: master
   tasks:
-   - name: initialize the cluster (this could take some time)
+   - name: Initialize the cluster (this could take some time)
      become: true
      ansible.builtin.shell: |
       kubeadm init >> cluster_initialized.log
@@ -10,15 +10,15 @@
       chdir: /home/master
       creates: cluster_initialized.log
 
-   - name: create .kube directory
+   - name: Create .kube directory
      become: true
      become_user: master
      file:
       path: $HOME/.kube
       state: directory
-      mode: 0755
+      mode: '0755'
 
-   - name: copy admin.conf to user's kube config
+   - name: Copy admin.conf to user's kube config
      become: true
      ansible.builtin.copy:
       src: /etc/kubernetes/admin.conf

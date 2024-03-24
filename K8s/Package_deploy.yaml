@@ -1,4 +1,3 @@
----
 - name: Install K8s Package
   hosts: all
   roles:
